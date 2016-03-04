@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from pdb import set_trace
 user = re.compile(r'\[\[User\:(\w+.*?)\|')
 ipaddress = re.compile(r'\[\[Special\:Contributions\/((?:[0-9]{1,3}\.){3}[0-9]{1,3})')
+ipaddress_user = re.compile(r'\[\[User\:((?:[0-9]{1,3}\.){3}[0-9]{1,3})\|')
 
 def extractTopic(line):
     return line.strip('=').strip()
@@ -23,27 +24,31 @@ def parseLine(line):
     # [[User:username|
     # [[Special:Contributions/192.168.1.1|
     if user.findall(line):
-        return (depth,user.findall(line)[-1])
+        return (depth, user.findall(line)[-1])
     elif ipaddress.findall(line):
-        return (depth,ipaddress.findall(line)[-1])
+        return (depth, ipaddress.findall(line)[-1])
+    elif ipaddress_user.findall(line):
+        return (depth, ipaddress_user.findall(line)[-1])
     else:
-        return (depth,None)
+        return (depth, None)
     
 def parsePost(post,author,postID,replyToID):
     return {'post':'\n'.join(post),'author':author,'postID':postID,'replyToId':replyToID}
 
 def parseTopic(topic):
+    # TODO: People commenting at depth=0 are probably replying to the highest depth=0 comment
     #set_trace()
     conversation = {}
     conversation['topic'] = extractTopic(topic[0])
     posts = []
     post = []
     depth = {}
+    top_level = None
     for line in topic:
         parsed = parseLine(line)
         post.append(line)
         if parsed[1]:
-            # end of post
+            # end of post / found signature on line
             postID = uuid1()
             depth[parsed[0]] = postID
             # Here's how we figure out the reply structure:
@@ -53,7 +58,11 @@ def parseTopic(topic):
             if parsed[0]-1 in depth:
                 replyToId = depth[parsed[0]-1] # find parent post: the most recent post at depth - 1
             else:
-                replyToId = None # must be top-level post
+                if top_level:
+                    replyToId = top_level # must be depth = 0 post, proably replying to the inital post
+                else:
+                    top_level = postID # intial post under topic
+                    replyToId = top_level # on intial posts, replyToID is the same as postID
             posts.append(parsePost(post,parsed[1],postID,replyToId))
             post = []
     if not posts:
@@ -82,3 +91,4 @@ def parsePage(xml_file):
     if topic:
         page.append(parseTopic(topic)) # parse the last topic
     return page
+
