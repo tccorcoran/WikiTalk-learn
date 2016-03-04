@@ -1,7 +1,19 @@
 import re
+import os
+import json
 from uuid import uuid1
 from bs4 import BeautifulSoup
 from pdb import set_trace
+from glob import glob
+from multiprocessing import Pool
+
+
+# TODO: import dir structure from other file,
+ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
+TALK_FILES_RAW_DIR = os.path.join(ROOT_DIR,'data/talk_pages')
+TALK_FILES_EXTRACTED_DIR = os.path.join(ROOT_DIR,'data/talk_pages_structured')
+
+
 user = re.compile(r'\[\[User\:(\w+.*?)\|')
 ipaddress = re.compile(r'\[\[Special\:Contributions\/((?:[0-9]{1,3}\.){3}[0-9]{1,3})')
 ipaddress_user = re.compile(r'\[\[User\:((?:[0-9]{1,3}\.){3}[0-9]{1,3})\|')
@@ -49,7 +61,7 @@ def parseTopic(topic):
         post.append(line)
         if parsed[1]:
             # end of post / found signature on line
-            postID = uuid1()
+            postID = str(uuid1())
             depth[parsed[0]] = postID
             # Here's how we figure out the reply structure:
             # As we walk down the tree we keep track of the depth of the post
@@ -75,6 +87,8 @@ def parsePage(xml_file):
     #set_trace()
     soup = BeautifulSoup(xml_file, 'xml')
     txt = soup.find('text').text
+    pageID = soup.find('id').text
+    page_title = soup.find('title').text
     first_topic = True
     topic = []
     page = []
@@ -90,5 +104,23 @@ def parsePage(xml_file):
         topic.append(line)
     if topic:
         page.append(parseTopic(topic)) # parse the last topic
-    return page
+    return (page,pageID,page_title)
+def extract_and_dump(talk_page):
 
+
+    with open(talk_page,'rb') as fi:
+        parsed_page = parsePage(fi.read())
+    with open(os.path.join(TALK_FILES_EXTRACTED_DIR,parsed_page[1]+'.json'),'wb') as fo:
+        json.dump(parsed_page,fo)
+            
+
+if __name__ == '__main__':
+    if not os.path.exists(TALK_FILES_EXTRACTED_DIR):
+        os.makedirs(TALK_FILES_EXTRACTED_DIR)
+    g = glob(os.path.join(TALK_FILES_RAW_DIR,'*.xml'))
+    pool = Pool(processes=7)
+    pool.map(extract_and_dump,g)
+    
+    
+    
+            
