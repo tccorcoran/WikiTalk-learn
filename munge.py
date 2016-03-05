@@ -13,16 +13,21 @@ ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
 TALK_FILES_RAW_DIR = os.path.join(ROOT_DIR,'data/talk_pages')
 TALK_FILES_EXTRACTED_DIR = os.path.join(ROOT_DIR,'data/talk_pages_structured')
 
-
+# Signature patterns (wiki links to users talk pages)
 user = re.compile(r'\[\[User\:(\w+.*?)\|')
 ipaddress = re.compile(r'\[\[Special\:Contributions\/((?:[0-9]{1,3}\.){3}[0-9]{1,3})')
 ipaddress_user = re.compile(r'\[\[User\:((?:[0-9]{1,3}\.){3}[0-9]{1,3})\|')
 
 def extractTopic(line):
+    """
+    Return the topic of a discusion, marked by == Discussion Topic ==
+    """
     return line.strip('=').strip()
 
 def parseLine(line):
-    #set_trace()
+    """
+    Take in a single line of a talk page, return how deep in the discussion thread it is, and if it is signed
+    """
     depth = 0 
     if not line.startswith(':'):
         pass
@@ -48,8 +53,9 @@ def parsePost(post,author,postID,replyToID):
     return {'post':'\n'.join(post),'author':author,'postID':postID,'replyToId':replyToID}
 
 def parseTopic(topic):
-    # TODO: People commenting at depth=0 are probably replying to the highest depth=0 comment
-    #set_trace()
+    """
+    Seperate replies within a single dicussion topic
+    """
     conversation = {}
     conversation['topic'] = extractTopic(topic[0])
     posts = []
@@ -84,7 +90,9 @@ def parseTopic(topic):
     
     
 def parsePage(xml_file):
-    #set_trace()
+    """
+    Generate a list of discussions held on a wikipedia talk page
+    """
     soup = BeautifulSoup(xml_file, 'xml')
     txt = soup.find('text').text
     pageID = soup.find('id').text
@@ -105,9 +113,12 @@ def parsePage(xml_file):
     if topic:
         page.append(parseTopic(topic)) # parse the last topic
     return (page,pageID,page_title)
+
+
 def extract_and_dump(talk_page):
-
-
+    """
+    Read in a raw xml file, output a json with extracted posts
+    """
     with open(talk_page,'rb') as fi:
         parsed_page = parsePage(fi.read())
     with open(os.path.join(TALK_FILES_EXTRACTED_DIR,parsed_page[1]+'.json'),'wb') as fo:
