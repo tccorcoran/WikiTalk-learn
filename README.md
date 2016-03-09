@@ -13,7 +13,7 @@ To generate the corpus yourself you need a copy of a Wikipedia metadata database
 TODOs
 ------------
 * preprocess text
-..* remove/standardize wiki markup (links,signatures)
+  * remove/standardize wiki markup (links,signatures)
 * collect corpus stats
-..* vocab size
-..* author info
+  * vocab size
+  * author info
