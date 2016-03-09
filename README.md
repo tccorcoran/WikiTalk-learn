@@ -9,3 +9,11 @@ Dependencies
 
 
 To generate the corpus yourself you need a copy of a Wikipedia metadata database dump, available [here](https://dumps.wikimedia.org/enwiki/).The metadata file with the talk pages looks like: `enwiki-*-pages-meta-current.xml.bz2`. This project is using [enwiki-20160204-pages-meta-current.xml.bz2](https://dumps.wikimedia.org/enwiki/20160204/).
+
+TODOs
+------------
+* preprocess text
+..* remove/standardize wiki markup (links,signatures)
+* collect corpus stats
+..* vocab size
+..* author info
