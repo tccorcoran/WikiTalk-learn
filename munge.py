@@ -1,4 +1,4 @@
-import re
+import regex as re
 import os
 import json
 from uuid import uuid1
@@ -10,11 +10,11 @@ from multiprocessing import Pool
 
 # TODO: import dir structure from other file,
 ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
-TALK_FILES_RAW_DIR = os.path.join(ROOT_DIR,'data/talk_pages')
-TALK_FILES_EXTRACTED_DIR = os.path.join(ROOT_DIR,'data/talk_pages_structured')
+TALK_FILES_RAW_DIR = os.path.join(ROOT_DIR,'data/talk_pages_raw_xml')
+TALK_FILES_EXTRACTED_DIR = os.path.join(ROOT_DIR,'data/talk_pages_structured_json')
 
 # Signature patterns (wiki links to users talk pages)
-user = re.compile(r'\[\[User\:(\w+.*?)\|')
+user = re.compile(r'\[\[User\:(\w+.*?)[\|\/]')
 ipaddress = re.compile(r'\[\[Special\:Contributions\/((?:[0-9]{1,3}\.){3}[0-9]{1,3})')
 ipaddress_user = re.compile(r'\[\[User\:((?:[0-9]{1,3}\.){3}[0-9]{1,3})\|')
 
@@ -40,12 +40,16 @@ def parseLine(line):
     # signatures
     # [[User:username|
     # [[Special:Contributions/192.168.1.1|
-    if user.findall(line):
-        return (depth, user.findall(line)[-1])
-    elif ipaddress.findall(line):
-        return (depth, ipaddress.findall(line)[-1])
-    elif ipaddress_user.findall(line):
-        return (depth, ipaddress_user.findall(line)[-1])
+    # NOTE/TODO: This will fail in cases where a user is mentioned in the post, but the post is signed by an IP address
+    author = user.findall(line, overlapped=True)
+    if author:     
+        return (depth, author[-1])
+    author = ipaddress.findall(line, overlapped=True)
+    if author:
+        return (depth, author[-1])
+    author = ipaddress_user.findall(line, overlapped=True)
+    if author:
+        return (depth, author[-1])
     else:
         return (depth, None)
     
@@ -129,7 +133,7 @@ if __name__ == '__main__':
     if not os.path.exists(TALK_FILES_EXTRACTED_DIR):
         os.makedirs(TALK_FILES_EXTRACTED_DIR)
     g = glob(os.path.join(TALK_FILES_RAW_DIR,'*.xml'))
-    pool = Pool(processes=7)
+    pool = Pool(processes=8)
     pool.map(extract_and_dump,g)
     
     
