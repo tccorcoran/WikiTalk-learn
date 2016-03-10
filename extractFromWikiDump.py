@@ -1,3 +1,6 @@
+"""
+Break down the intial very large (<100GB) raw xml wiki dump
+"""
 from bs4 import BeautifulSoup
 from pdb import set_trace
 import sys

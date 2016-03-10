@@ -12,8 +12,14 @@ To generate the corpus yourself you need a copy of a Wikipedia metadata database
 
 TODOs
 ------------
-* preprocess text
-  * remove/standardize wiki markup (links,signatures)
+* create way to extract from talk_pages_cat.xml
 * collect corpus stats
   * vocab size
   * author info
+
+Procedure
+---------
+
+* To generate the corpus yourself you need a copy of a Wikipedia metadata database dump, [enwiki-20160204-pages-meta-current.xml.bz2](https://dumps.wikimedia.org/enwiki/20160204/). Download this to the `data/` dir and extract the bzip2 xml file.
+* run `python extratFromWikiDump.py` to generate a dir of extracted talk xml files (very large > 1 million files)
+* run `python munge.py` to generate json files with some metadata generated from some heuristics (reply structure, author, post topic

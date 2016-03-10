@@ -1,3 +1,7 @@
+"""
+Extract and convert raw xml files generate by extratFromWikiDump into
+json files with some metadata (reply structure, author, post topic)
+"""
 import regex as re
 import os
 import json
