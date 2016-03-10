@@ -2,7 +2,7 @@ import os
 import json
 from glob import glob
 from collections import Counter
-
+import regex as re
 from gensim import corpora
 
 ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
@@ -45,19 +45,42 @@ def createCleanCorpus(g,num_top_authors):
                         author = post['author']
                         if author in author_list:
                             text = post['post']
-                            cleanText(text)
-
-
+                            text = cleanText(text)
+                            print text
+                            print '\n'
+                            
+# Some of the below regex were taken from wikifil.pl by Matt Mahoney (http://mattmahoney.net/dc/textdata.html)
+title = re.compile(r'^===?[^=]*===?',flags=re.M) # Topic titles
+and_ = re.compile(r'&amp;') # decode URL encoded chars
+lt = re.compile(r'&lt;')
+gt = re.compile(r'&gt;')
+ref = re.compile(r'<ref[^<]*<\/ref>') # remove references <ref...> ... </ref>
+curly = re.compile(r'\{\{[^\{]*?\}\}') # curly markup brackets
+reply = re.compile(r'^\:*',flags=re.M)  # ::: reply structure
+user = re.compile(r'\[\[User.*?\]\]') # usernames
+special = re.compile(r'\[\[Special\:Contributions\/.*?\]\]') # more usernames 
+html_tags =  re.compile(r'<[^>]*>') # XHMTL tags
+wiki_links = re.compile(r'\[\[[^\|\]]*\|')  # remove wiki url, preserve visible text
+brackets = re.compile(r'(\[\[?|\]\]?)') # remove brackets
+url_encoded = re.compile(r'&[^;]*;') # remove URL encoded chars
 def cleanText(text):
-    title = re.compile(r'^===?[\w\s\.\:]*===?') # Topic titles
-    reply = re.compile(r'^\:*') 
-    user = re.compile(r'\[\[User.*?\]\]')
-    special = re.compile(r'\[\[Special\:Contributions\/.*?\]\]')
-    html_tags =  re.compile(r'<[^>]*>') # XHMTL tags
-    wiki_links = re.compile(r'\[\[(\w+\:.*?\|)') # first capuring group
-    brackets = re.compile(r'(\[\[|\]\])')
-    
-    
+    text = text.strip()
+    text = text.replace('\n', ' ')
+    text= title.sub('',text)
+    text = and_.sub('&',text)
+    text = lt.sub('<',text)
+    text = gt.sub('>',text)
+    text = curly.sub('',text) 
+    text = curly.sub('',text) # double nested curly brackets
+    text = ref.sub('',text)
+    text= reply.sub('',text)
+    text= special.sub('',text)
+    text= user.sub('**USER**',text)
+    text= html_tags.sub('',text)
+    text= wiki_links.sub('[[',text)
+    text= brackets.sub('',text)
+    text = url_encoded.sub(' ',text)
+    return text
 
 def createVocabDict(g,num_top_authors):
     print "Loading Tokenizer..."
