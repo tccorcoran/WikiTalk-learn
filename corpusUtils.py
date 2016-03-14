@@ -9,8 +9,8 @@ from collections import Counter
 import codecs
 import os
 import json
+
 from spacy.en import English
-tokenize = English(tagger=None,parser=None,entity=None)
 import regex as re
 
 ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
@@ -27,19 +27,22 @@ class MyCorpus(object):
         self.corpus_file = os.path.join(self.ROOT_DIR,'data/{}_authors.corpus'.format(num_authors))
         self.start = start # which line to start reading from
         self.stop = stop
+        self.length = None
     def __len__(self):
         """ Number of posts in corpus """
-        l = 0
-        for line in self:
-            l += 1
-        return l
+        if self.length is None:
+            self.length = 0
+            for line in self:
+                self.length += 1
+        return self.length
     def __iter__(self):
         "output: tokenize post where line[0] is author followed by tokens"
         i = 0
-        for line in codecs.open(self.corpus_file,'r','utf8'):
-            if i >= self.start and i < self.stop and not line.startswith('\n'):
-                yield line.split()
-                i += 1
+        with codecs.open(self.corpus_file,'r','utf8') as fi:
+            for line in fi:
+                if i >= self.start and i < self.stop and not line.startswith('\n'):
+                    yield line.split()
+                    i += 1
 
 def authorStats(g):
     """ Collect the most prolific authors by number of chars """
@@ -98,18 +101,18 @@ def cleanText(text):
     text = text.strip()
     return text
         
-
+spaces = re.compile(r'\s')
 def createCleanCorpus(g,q,num_top_authors,longest_sentence):
     """
     output corpus file with cleaned post text with only num_top_authors
-    author's name immediately precedes text. One post per line
+    author's name immediately precedes text with whitespace removed. One post per line
     
     Corpus format (utf-8):
     author tokenize text separated by whitespace . newlines removed
     
     wikipedia_user_name Lorem ipsum dolor sit amet , consectetur adipiscing elit, sed do eiusmod tempor 
     
-    another_user_name_23 Lorem ipsum dolor sit amet , consectetur adipiscing elit , sed do eiusmod tempor 
+    another_username23 Lorem ipsum dolor sit amet , consectetur adipiscing elit , sed do eiusmod tempor 
     
     Output file name: 'data/{}_authors.corpus'.format(num_top_authors)
     """
@@ -124,7 +127,7 @@ def createCleanCorpus(g,q,num_top_authors,longest_sentence):
             for topic in page[0]:
                 if len(topic) > 0:
                     for post in topic['posts']:
-                        author = post['author']
+                        author = spaces.sub('', post['author'])
                         if author in author_list:
                             text = post['post']
                             text = tokenize(cleanText(text))
@@ -181,22 +184,18 @@ def listener(q,fp):
         fo.flush()
     fo.close()
 
-def addToDict(kwargs):
+def addToDict(d, start, stop, n_author):
     """
     put each token into a dict with a unique id
     also calculate the longest sentence by number of tokens
     """
-    corpus = MyCorpus(kwargs['n_authors'],start=kwargs['start'],stop=kwargs['stop'])
-    for doc in corpus:
-        for sentence in tokenize(doc).sents:
-            sen_len = len(sentence)
-            if sen_len > kwargs['longest_sentence'].value:
-                kwargs['longest_sentence'].value = sen_len
-            for tok in sentence:
-                token = tok.orth_.lower()
-                if not token in kwargs['d']:
-                    kwargs['d'][token] = len(kwargs['d'])
-
+    corpus = MyCorpus(n_authors,start=start,stop=stop)
+    for post in corpus:
+        tokens = set(post)
+        for token in tokens:
+            if token not in d:
+                d[token] = len(d) # give each token a unique ID,
+                
 def createVocabDict(n_authors,n_threads):
     """
     Create a vocabulary for the corpus
@@ -211,18 +210,37 @@ def createVocabDict(n_authors,n_threads):
     m=Manager() # shared between processes 
     vocab = m.dict()
     pool = Pool(n_threads)
-    args = [{'d':vocab,'start':start,'stop':start+len_corpus/n_threads,'n_authors':n_authors,
-                         'longest_sentence':longest_sentence} \
-                        for start in range(0,len_corpus,len_corpus/n_threads)]
-    args[-1]['stop']  = float('inf') # make sure the last thread reads the end of the corpus 
-    pool.map(addToDict,args)
+    
+    jobs = []
+    for start in range(0,len_corpus,len_corpus/n_threads):
+        if (len_corpus-start) < (len_corpus/n_threads):
+            stop = len_corpus + 1 # make sure the last thread reads the end of the corpus 
+        else:
+            stop = start+len_corpus/n_threads
+            
+        job = pool.apply_async(addToDict, (vocab, start, stop, n_authors))
+        jobs.append(job)
+
+    for job in jobs: 
+        job.wait()
+        
     vocab = dict(vocab)
+    
+    with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'rb') as fi:
+        stats = json.load(fi)
+    stats['vocab_size'] =  len(vocab)
     with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'wb') as fo:
-        json.dump({'longest_sentence':longest_sentence,'vocab_size':len(vocab)},fo)
+        json.dump(stats,fo)
     with open(os.path.join(ROOT_DIR,'data/vocab_{}_authors.dict'.format(n_authors)),'wb') as fo:
         json.dump(vocab,fo)
-    return vocab,longest_sentence,len(vocab)
+    return vocab, len(vocab)
 
 if __name__ == '__main__':
-    n_authors = 25
-    poolCleanCorpus(g,n_authors,8)
+    tokenize = English(tagger=None,parser=None,entity=None)
+    author_sizes = (25,50,100,500,1000)
+    for i in author_sizes:
+        n_authors = i
+        poolCleanCorpus(g,n_authors,8)
+    for i in author_sizes:
+        n_authors = i
+        createVocabDict(n_authors,8)

@@ -1,6 +1,7 @@
 #Very large data files
 data/
-
+data/talk_pages_structured_json/
+data/talk_pages_raw_xml/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
