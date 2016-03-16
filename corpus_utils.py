@@ -198,7 +198,8 @@ def addToDict(d, start, stop, n_author):
         tokens = set(post)
         for token in tokens:
             if token not in d:
-                d[token] = len(d) # give each token a unique ID,
+                d[token] = len(d)+1 # give each token a unique ID,
+                                    # save 0 for padding ID
                 
 def createVocabDict(n_authors,n_jobs):
     """
@@ -230,8 +231,7 @@ def createVocabDict(n_authors,n_jobs):
         
     vocab = dict(vocab)
     
-    with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'rb') as fi:
-        stats = json.load(fi)
+    stats = loadStats(n_authors)
     stats['vocab_size'] =  len(vocab)
     with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'wb') as fo:
         json.dump(stats,fo)
@@ -283,6 +283,11 @@ def loadVocab(n_authors):
     with open(os.path.join(ROOT_DIR,'data/vocab_{}_authors.dict'.format(n_authors)),'rb') as fo:
         vocab =  json.load(fo)
     return vocab
+def loadStats(n_authors):
+    with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'rb') as fi:
+        stats = json.load(fi)
+    return stats
+
 
 def loadData(n_authors):
     """
@@ -290,12 +295,41 @@ def loadData(n_authors):
     """
     X = [] # features
     y = [] # labels
+    authors = {}
+    stats = loadStats(n_authors)
+    padding = stats['longest_sentence']
     corpus = MyCorpus(n_authors,vector=True)
     for line in corpus:
-        X.append(np.array([int(value) for value in line[1:]]))
-        y.append(int(line[0]))
-    return np.array(X),np.array(y)
+        vec = [int(value) for value in line[1:]]
+        while len(vec) < padding: # add padding to each doc
+            vec.append(0)
+        X.append(np.array(vec)) # add feature vector to data
         
+        # Create one hot vector for label
+        one_hot = [0]*n_authors
+        author = int(line[0])
+        if not author in authors:
+            authors[author] = len(authors)
+        one_hot[authors[author]] = 1
+        y.append(np.array(one_hot))
+    return np.array(X),np.array(y)
+
+def batch_iter(data, batch_size, num_epochs):
+    """
+    Generates a batch iterator for a dataset.
+    # This code is modified from the original found here: github.com/dennybritz/cnn-text-classification-tf
+    """
+    data = np.array(data)
+    data_size = len(data)
+    num_batches_per_epoch = int(len(data)/batch_size) + 1
+    for epoch in range(num_epochs):
+        # Shuffle the data at each epoch
+        shuffle_indices = np.random.permutation(np.arange(data_size))
+        shuffled_data = data[shuffle_indices]
+        for batch_num in range(num_batches_per_epoch):
+            start_index = batch_num * batch_size
+            end_index = min((batch_num + 1) * batch_size, data_size)
+            yield shuffled_data[start_index:end_index]
     
 
 if __name__ == '__main__':
