@@ -1,8 +1,10 @@
 #Very large data files
-data/
 data/talk_pages_structured_json/
 data/talk_pages_raw_xml/
-
+*.xml
+*.xml.bz2
+*.corpus
+runs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

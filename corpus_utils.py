@@ -105,7 +105,7 @@ def cleanText(text):
     return text
         
 spaces = re.compile(r'\s')
-def createCleanCorpus(g,q,num_top_authors,longest_sentence):
+def createCleanCorpus(g,q,num_top_authors):
     """
     output corpus file with cleaned post text with only num_top_authors
     author's name immediately precedes text with whitespace removed. One post per line
@@ -136,7 +136,6 @@ def createCleanCorpus(g,q,num_top_authors,longest_sentence):
                             text = post['post']
                             text = tokenize(cleanText(text))
                             lengths = [len(sentence) for sentence in text.sents]
-                            longest_sentence.value = max(max(lengths),longest_sentence.value)
                             text = ' '.join(tok.lower_ for s in text.sents for tok in s).replace('\n', ' ') # seperate toks by whitespace, remove newlines
                             line = '{} {}\n\n'.format(author,text)
                             q.put(line)
@@ -145,7 +144,6 @@ def createCleanCorpus(g,q,num_top_authors,longest_sentence):
 def poolCleanCorpus(g, n_authors, n_jobs):
     manager = Manager()
     q = manager.Queue()
-    longest_sentence = manager.Value('i',0)
     pool = Pool(n_jobs)
     
     cleaned_corpus_file = os.path.join(ROOT_DIR,'data/{}_authors.corpus'.format(n_authors))
@@ -155,7 +153,7 @@ def poolCleanCorpus(g, n_authors, n_jobs):
     #set_trace()
     for chunk in chunks(g,len(g)/n_jobs):
         #set_trace()
-        job = pool.apply_async(createCleanCorpus, (chunk, q, n_authors, longest_sentence))
+        job = pool.apply_async(createCleanCorpus, (chunk, q, n_authors))
         jobs.append(job)
     #collect results from the workers through the pool result queue
     for job in jobs: 
@@ -163,8 +161,6 @@ def poolCleanCorpus(g, n_authors, n_jobs):
 
     #now we are done, kill the listener
     q.put('**EOF**')
-    with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'wb') as fo:
-        json.dump({'longest_sentence':longest_sentence.value},fo)   
     pool.close()
     pool.join()
     
@@ -191,7 +187,6 @@ def listener(q,fp):
 def addToDict(d, start, stop, n_author):
     """
     put each token into a dict with a unique id
-    also calculate the longest sentence by number of tokens
     """
     corpus = MyCorpus(n_authors,start=start,stop=stop)
     for post in corpus:
@@ -209,7 +204,6 @@ def createVocabDict(n_authors,n_jobs):
            n_jobs -- number of jobs to run. Splits corpus into n_jobs to run tokenizer in parallel.
            
     output: vocab -- dict where each word in the corpus lexicon has a unique id
-            longest_sentence -- num of tokens in the longest sentence
     """
     len_corpus = len(MyCorpus(n_authors))# read corpus and figure this out
     m=Manager() # shared between processes
@@ -231,10 +225,6 @@ def createVocabDict(n_authors,n_jobs):
         
     vocab = dict(vocab)
     
-    stats = loadStats(n_authors)
-    stats['vocab_size'] =  len(vocab)
-    with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'wb') as fo:
-        json.dump(stats,fo)
     with open(os.path.join(ROOT_DIR,'data/vocab_{}_authors.dict'.format(n_authors)),'wb') as fo:
         json.dump(vocab,fo)
     return vocab, len(vocab)
@@ -242,6 +232,9 @@ def createVocabDict(n_authors,n_jobs):
     pool.join()
 
 def vectorize(vocab, q, start, stop, n_authors):
+    """
+    Turn row of tokens into a vector, each token matched to a corpus-unique id
+    """
     corpus = MyCorpus(n_authors,start=start,stop=stop)
     for post in corpus:
         line = []
@@ -253,6 +246,11 @@ def vectorize(vocab, q, start, stop, n_authors):
         
 
 def createVectorCorpus(n_authors,n_jobs):
+    """
+    write turn a .corpus file into .corpus.vector
+    each line is a document, tokens are mapped to unique IDs
+    author is first id on line
+    """
     vocab =  loadVocab(n_authors)
     vector_corpus_file = os.path.join(ROOT_DIR,'data/{}_authors.corpus.vector'.format(n_authors))
     len_corpus = len(MyCorpus(n_authors))# read corpus and figure this out
@@ -283,11 +281,14 @@ def loadVocab(n_authors):
     with open(os.path.join(ROOT_DIR,'data/vocab_{}_authors.dict'.format(n_authors)),'rb') as fo:
         vocab =  json.load(fo)
     return vocab
-def loadStats(n_authors):
-    with open(os.path.join(ROOT_DIR,'data/{}_authors.stats'.format(n_authors)),'rb') as fi:
-        stats = json.load(fi)
-    return stats
 
+def getLongestDoc(n_authors):
+    corpus = MyCorpus(n_authors,vector=True)
+    i = 0
+    for line in corpus:
+        if len(line[1:]) > i:
+            i = len(line[1:])
+    return i
 
 def loadData(n_authors):
     """
@@ -296,9 +297,9 @@ def loadData(n_authors):
     X = [] # features
     y = [] # labels
     authors = {}
-    stats = loadStats(n_authors)
-    padding = stats['longest_sentence']
+    padding = getLongestDoc(n_authors)
     corpus = MyCorpus(n_authors,vector=True)
+    
     for line in corpus:
         vec = [int(value) for value in line[1:]]
         while len(vec) < padding: # add padding to each doc
