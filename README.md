@@ -23,6 +23,4 @@ Procedure
 * To generate the corpus yourself you need a copy of a Wikipedia metadata database dump, [enwiki-20160204-pages-meta-current.xml.bz2](https://dumps.wikimedia.org/enwiki/20160204/). Download this to the `data/` dir and extract the bzip2 xml file.
 * run `python extratFromWikiDump.py` to generate a dir of extracted talk xml files (very large > 1 million files)
 * run `python munge.py` to generate json files with some metadata generated from some heuristics (reply structure, author, post topic)
-* use `authorStats` in `corpusUtils` to generate stats on the authors
-* use `createCleanCorpus` in `corpusUtils` to create a corpus limited to the number of top authors you want
-* use `createVocabDict` in corpusUtils` to create a vocabulary of the corpus
+* run `python corpus_utils.py` to generate vectorized corpus files
