@@ -11,7 +11,7 @@ import codecs
 import os
 import json
 
-from spacy.en import English
+
 import regex as re
 
 ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
@@ -135,7 +135,6 @@ def createCleanCorpus(g,q,num_top_authors):
                             author = spaces.sub('', post['author'])
                             text = post['post']
                             text = tokenize(cleanText(text))
-                            lengths = [len(sentence) for sentence in text.sents]
                             text = ' '.join(tok.lower_ for s in text.sents for tok in s).replace('\n', ' ') # seperate toks by whitespace, remove newlines
                             line = '{} {}\n\n'.format(author,text)
                             q.put(line)
@@ -335,6 +334,7 @@ def batch_iter(data, batch_size, num_epochs):
 
 if __name__ == '__main__':
 #    authorStats(g)
+    from spacy.en import English
     tokenize = English(tagger=None,parser=None,entity=None)
     author_sizes = (10,25,50,100)
     print "Creating parsed corpus..."
