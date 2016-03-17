@@ -70,7 +70,7 @@ with tf.Graph().as_default():
         cnn = TextCNN(
             sequence_length=x_train.shape[1],
             num_classes=y_train.shape[1],
-            vocab_size=len(vocabulary),
+            vocab_size=len(vocabulary)+1,
             embedding_size=FLAGS.embedding_dim,
             filter_sizes=map(int, FLAGS.filter_sizes.split(",")),
             num_filters=FLAGS.num_filters,
