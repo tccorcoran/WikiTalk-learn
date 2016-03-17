@@ -314,6 +314,26 @@ def loadData(n_authors):
         y.append(np.array(one_hot))
     return np.array(X),np.array(y)
 
+def traindevtestSplit(X,y):
+    """
+    Split data into three sets: training, validation (for testing during traning)
+    and test (for testing at the very end of training)
+    """
+    train_percent = 0.7
+    dev_percent = 0.2
+    np.random.seed(10)
+    shuffle_indices = np.random.permutation(np.arange(len(y)))
+    train_end = int(train_percent*len(y))
+    dev_part = int(dev_percent*len(y))
+    
+    x_shuffled = X[shuffle_indices]
+    y_shuffled = y[shuffle_indices]
+    
+    x_train, x_dev,x_test = x_shuffled[:-train_end], x_shuffled[-train_end:-train_end+dev_part],x_shuffled[-train_end+dev_part:]
+    y_train, y_dev, y_test = y_shuffled[:-train_end], y_shuffled[-train_end:-train_end + dev_part],y_shuffled[-train_end+dev_part:]
+    
+    return ((x_train, x_dev, x_test),(y_train, y_dev, y_test))
+
 def batch_iter(data, batch_size, num_epochs):
     """
     Generates a batch iterator for a dataset.

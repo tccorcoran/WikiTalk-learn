@@ -46,16 +46,12 @@ print("Loading data...")
 x, y = corpus_utils.loadData(n_authors)
 vocabulary = corpus_utils.loadVocab(n_authors)
 # Randomly shuffle data
-np.random.seed(10)
-shuffle_indices = np.random.permutation(np.arange(len(y)))
-x_shuffled = x[shuffle_indices]
-y_shuffled = y[shuffle_indices]
-# Split train/test set
-# TODO: This is very crude, should use cross-validation
-x_train, x_dev = x_shuffled[:-1000], x_shuffled[-1000:]
-y_train, y_dev = y_shuffled[:-1000], y_shuffled[-1000:]
-print("Vocabulary Size: {:d}".format(len(vocabulary)))
-print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
+x_splits,y_splits = corpus_utils.traindevtestSplit(x,y)
+x_train, x_dev, x_test = x_splits
+y_train, y_dev, y_test = y_splits
+
+print("Vocabulary Size: {:d}".format(len(vocabulary)+1))
+print("Train/Dev/Test split: {:d}/{:d}/{:d}".format(len(y_train), len(y_dev),len(y_test)))
 
 
 # Training
