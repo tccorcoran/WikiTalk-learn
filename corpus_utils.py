@@ -354,8 +354,8 @@ def traindevtestSplit(X,y):
     x_shuffled = X[shuffle_indices]
     y_shuffled = y[shuffle_indices]
     
-    x_train, x_dev,x_test = x_shuffled[:-train_end], x_shuffled[-train_end:-train_end+dev_part],x_shuffled[-train_end+dev_part:]
-    y_train, y_dev, y_test = y_shuffled[:-train_end], y_shuffled[-train_end:-train_end + dev_part],y_shuffled[-train_end+dev_part:]
+    x_train, x_dev,x_test = x_shuffled[:train_end], x_shuffled[train_end:train_end+dev_part],x_shuffled[train_end+dev_part:]
+    y_train, y_dev, y_test = y_shuffled[:train_end], y_shuffled[train_end:train_end+dev_part],y_shuffled[train_end+dev_part:]
     
     return ((x_train, x_dev, x_test),(y_train, y_dev, y_test))
 
