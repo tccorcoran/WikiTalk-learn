@@ -344,8 +344,8 @@ def traindevtestSplit(X,y):
     Split data into three sets: training, validation (for testing during traning)
     and test (for testing at the very end of training)
     """
-    train_percent = 0.7
-    dev_percent = 0.2
+    train_percent = 0.8
+    dev_percent = 0.1
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
     train_end = int(train_percent*len(y))

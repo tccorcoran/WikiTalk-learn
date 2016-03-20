@@ -22,19 +22,30 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 1024, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 2048, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 20, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every",10 , "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 20, "Save model after this many steps (default: 100)")
+
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 FLAGS = tf.flags.FLAGS
 FLAGS.batch_size
+
+
+# Output directory for models and summaries
+timestamp = str(int(time.time()))
+out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
+print("Writing to {}\n".format(out_dir))
+parameter_file = os.path.join(out_dir, "parameters.txt")
+
 print("\nParameters:")
-for attr, value in sorted(FLAGS.__flags.iteritems()):
-    print("{}={}".format(attr.upper(), value))
+with open(parameter_file,'wb') as fo:
+    for attr, value in sorted(FLAGS.__flags.iteritems()):
+        print("{}={}".format(attr.upper(), value))
+        fo.write("{}={}".format(attr.upper(), value))
 print("")
 
 
@@ -52,6 +63,7 @@ y_train, y_dev, y_test = y_splits
 
 print("Vocabulary Size: {:d}".format(len(vocabulary)+1))
 print("Train/Dev/Test split: {:d}/{:d}/{:d}".format(len(y_train), len(y_dev),len(y_test)))
+
 
 
 # Training
@@ -88,10 +100,7 @@ with tf.Graph().as_default():
                 grad_summaries.append(sparsity_summary)
         grad_summaries_merged = tf.merge_summary(grad_summaries)
 
-        # Output directory for models and summaries
-        timestamp = str(int(time.time()))
-        out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
-        print("Writing to {}\n".format(out_dir))
+
 
         # Summaries for loss and accuracy
         loss_summary = tf.scalar_summary("loss", cnn.loss)
@@ -103,9 +112,13 @@ with tf.Graph().as_default():
         train_summary_writer = tf.train.SummaryWriter(train_summary_dir, sess.graph_def)
 
         # Dev summaries
-        dev_summary_op = tf.merge_summary([loss_summary, acc_summary])
+        eval_summary_op = tf.merge_summary([loss_summary, acc_summary])
         dev_summary_dir = os.path.join(out_dir, "summaries", "dev")
         dev_summary_writer = tf.train.SummaryWriter(dev_summary_dir, sess.graph_def)
+        
+        # Test summaries
+        test_summary_dir = os.path.join(out_dir, "summaries", "test")
+        test_summary_writer = tf.train.SummaryWriter(test_summary_dir, sess.graph_def)
 
         # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
         checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
@@ -133,18 +146,16 @@ with tf.Graph().as_default():
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
             train_summary_writer.add_summary(summaries, step)
 
-        def dev_step(x_batch, y_batch, writer=None):
+        def eval_step(x_batch, y_batch, writer=None):
             """
-            Evaluates model on a dev set
+            Evaluates model on a non-training set
             """
             feed_dict = {
               cnn.input_x: x_batch,
               cnn.input_y: y_batch,
               cnn.dropout_keep_prob: 1.0 # don't perform dropout on evaluation
             }
-            step, summaries, loss, accuracy = sess.run(
-                [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
-                feed_dict)
+            step, summaries, loss, accuracy = sess.run([global_step, eval_summary_op, cnn.loss, cnn.accuracy],feed_dict)
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
             if writer:
@@ -160,8 +171,10 @@ with tf.Graph().as_default():
             current_step = tf.train.global_step(sess, global_step)
             if current_step % FLAGS.evaluate_every == 0:
                 print("\nEvaluation:")
-                dev_step(x_dev, y_dev, writer=dev_summary_writer)
+                eval_step(x_dev, y_dev, writer=dev_summary_writer)
                 print("")
             if current_step % FLAGS.checkpoint_every == 0:
                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                 print("Saved model checkpoint to {}\n".format(path))
+        # Test model once
+        eval_step(x_test, y_test, writer=test_summary_writer)
