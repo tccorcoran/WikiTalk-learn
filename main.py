@@ -17,12 +17,12 @@ from pdb import set_trace
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
 tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
-tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 128)")
+tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 2048, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 1024, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 20, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every",10 , "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 20, "Save model after this many steps (default: 100)")
@@ -38,6 +38,11 @@ FLAGS.batch_size
 # Output directory for models and summaries
 timestamp = str(int(time.time()))
 out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
+# Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
+checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
+checkpoint_prefix = os.path.join(checkpoint_dir, "model")
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
 print("Writing to {}\n".format(out_dir))
 parameter_file = os.path.join(out_dir, "parameters.txt")
 
@@ -120,11 +125,7 @@ with tf.Graph().as_default():
         test_summary_dir = os.path.join(out_dir, "summaries", "test")
         test_summary_writer = tf.train.SummaryWriter(test_summary_dir, sess.graph_def)
 
-        # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
-        checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
-        checkpoint_prefix = os.path.join(checkpoint_dir, "model")
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
+
         saver = tf.train.Saver(tf.all_variables())
 
         # Initialize all variables
