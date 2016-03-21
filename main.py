@@ -22,7 +22,7 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 1024, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 20, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every",10 , "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 20, "Save model after this many steps (default: 100)")
@@ -30,6 +30,7 @@ tf.flags.DEFINE_integer("checkpoint_every", 20, "Save model after this many step
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
+tf.flags.DEFINE_string("checkpoint_file","", "Checkpoint to resume")
 
 FLAGS = tf.flags.FLAGS
 FLAGS.batch_size
@@ -127,7 +128,10 @@ with tf.Graph().as_default():
 
 
         saver = tf.train.Saver(tf.all_variables())
-
+        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_file)
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+        set_trace()
         # Initialize all variables
         sess.run(tf.initialize_all_variables())
 
