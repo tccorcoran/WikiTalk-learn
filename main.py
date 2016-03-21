@@ -128,10 +128,9 @@ with tf.Graph().as_default():
 
 
         saver = tf.train.Saver(tf.all_variables())
-        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_file)
-        if ckpt and ckpt.model_checkpoint_path:
-            saver.restore(sess, ckpt.model_checkpoint_path)
         set_trace()
+        if FLAGS.checkpoint_file:
+            saver.restore(sess, FLAGS.checkpoint_file)
         # Initialize all variables
         sess.run(tf.initialize_all_variables())
 
