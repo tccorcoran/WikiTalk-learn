@@ -3,7 +3,6 @@
 
 
 import tensorflow as tf
-import numpy as np
 import os
 import time
 import datetime
@@ -15,22 +14,22 @@ from pdb import set_trace
 # ==================================================
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
-tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
-tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
-tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
+tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding")
+tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes")
+tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size")
+tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 20, "Number of training epochs (default: 200)")
-tf.flags.DEFINE_integer("evaluate_every",10 , "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("checkpoint_every", 20, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("batch_size", 128, "Batch Size")
+tf.flags.DEFINE_integer("num_epochs", 40, "Number of training epochs")
+tf.flags.DEFINE_integer("evaluate_every",20 , "Evaluate model on dev set after this many steps")
+tf.flags.DEFINE_integer("checkpoint_every", 40, "Save model after this many steps")
 
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
-tf.flags.DEFINE_string("checkpoint_file","", "Checkpoint to resume")
+tf.flags.DEFINE_string("checkpoint_dir","", "Checkpoint to resume")
 
 FLAGS = tf.flags.FLAGS
 FLAGS.batch_size
@@ -51,7 +50,7 @@ print("\nParameters:")
 with open(parameter_file,'wb') as fo:
     for attr, value in sorted(FLAGS.__flags.iteritems()):
         print("{}={}".format(attr.upper(), value))
-        fo.write("{}={}".format(attr.upper(), value))
+        fo.write("{}={}\n".format(attr.upper(), value))
 print("")
 
 
@@ -128,9 +127,10 @@ with tf.Graph().as_default():
 
 
         saver = tf.train.Saver(tf.all_variables())
-        set_trace()
-        if FLAGS.checkpoint_file:
-            saver.restore(sess, FLAGS.checkpoint_file)
+        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
         # Initialize all variables
         sess.run(tf.initialize_all_variables())
 

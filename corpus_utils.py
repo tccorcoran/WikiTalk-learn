@@ -314,7 +314,7 @@ def getLongestDoc(n_authors):
             i = len(line[1:])
     return i
 
-def loadData(n_authors):
+def loadData(n_authors,return_onehot=True):
     """
     Load data into np arrays
     """
@@ -336,8 +336,26 @@ def loadData(n_authors):
         if not author in authors:
             authors[author] = len(authors)
         one_hot[authors[author]] = 1
-        y.append(np.array(one_hot))
+        if return_onehot:
+            y.append(np.array(one_hot))
+        else:
+            y.append(authors[author])
     return np.array(X),np.array(y)
+
+def loadDataNB(n_authors):
+    X = [] # features
+    y = [] # labels
+    authors = {}
+
+    corpus = MyCorpus(n_authors,vector=True)
+    for line in corpus:
+        vec = [int(value) for value in line[1:]]
+        X.append(vec)
+        author = int(line[0])
+        if not author in authors:
+            authors[author] = len(authors)
+        y.append(authors[author])
+    return X,y
 
 def traindevtestSplit(X,y):
     """
