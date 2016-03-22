@@ -342,20 +342,11 @@ def loadData(n_authors,return_onehot=True):
             y.append(authors[author])
     return np.array(X),np.array(y)
 
-def loadDataNB(n_authors):
-    X = [] # features
-    y = [] # labels
-    authors = {}
-
-    corpus = MyCorpus(n_authors,vector=True)
-    for line in corpus:
-        vec = [int(value) for value in line[1:]]
-        X.append(vec)
-        author = int(line[0])
-        if not author in authors:
-            authors[author] = len(authors)
-        y.append(authors[author])
-    return X,y
+def unOneHot(y):
+    ret = []
+    for vec in y:
+        ret.append(vec.index(1))
+    return ret
 
 def traindevtestSplit(X,y):
     """

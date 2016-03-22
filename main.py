@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 import time
 import datetime
+from sklearn import metrics
 import corpus_utils
 from CNN import TextCNN
 
@@ -131,8 +132,11 @@ with tf.Graph().as_default():
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
             global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+            pred = sess.run(cnn.predicions, {cnn.input_x: x_test[:500],cnn.input_y: y_test[:500],cnn.dropout_keep_prob: 1.0}) # don't perform dropout on evaluation})
+            metrics.f1_score(corpus_utils.unOneHot(y_test[:500]),pred)
         # Initialize all variables
-        sess.run(tf.initialize_all_variables())
+        else:
+            sess.run(tf.initialize_all_variables())
 
         def train_step(x_batch, y_batch):
             """
