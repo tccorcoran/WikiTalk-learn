@@ -132,7 +132,7 @@ with tf.Graph().as_default():
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
             global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-            pred = sess.run(cnn.predicions, {cnn.input_x: x_test[:500],cnn.input_y: y_test[:500],cnn.dropout_keep_prob: 1.0}) # don't perform dropout on evaluation})
+            pred = sess.run(cnn.predicions, {cnn.input_x: x_test[:500],cnn.dropout_keep_prob: 1.0}) 
             metrics.f1_score(corpus_utils.unOneHot(y_test[:500]),pred)
         # Initialize all variables
         else:

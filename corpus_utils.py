@@ -6,6 +6,7 @@ from multiprocessing import Manager, Pool
 from pdb import set_trace
 from glob import glob
 from collections import Counter
+from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 import codecs
 import os
@@ -48,6 +49,11 @@ class MyCorpus(object):
                 if i >= self.start and i < self.stop and not line.startswith('\n'):
                     yield line.split()
                     i += 1
+def writeFeatureVector(n_authors):
+    corpus = MyCorpus(n_authors,vector=True)
+    with open(os.path.join(ROOT_DIR,'data/{}_authors.corpus.vector.feats'.format(n_authors)),'wb') as fo:
+        for line in corpus:
+            fo.write(' '.join(line[1:])+'\n')
 
 def authorStats(g):
     """
@@ -345,8 +351,16 @@ def loadData(n_authors,return_onehot=True):
 def unOneHot(y):
     ret = []
     for vec in y:
-        ret.append(vec.index(1))
+        ret.append(list(vec.index(1)))
     return ret
+
+def loadDataSparse(n_authors,return_onehot=True):
+    v = CountVectorizer()
+    with open(os.path.join(ROOT_DIR,'data/{}_authors.corpus.vector.feats'.format(n_authors))) as fi:
+        X = v.fit_transform(fi)
+    _,y = loadData(n_authors,return_onehot=return_onehot)
+    del _
+    return X,y
 
 def traindevtestSplit(X,y):
     """
@@ -387,7 +401,8 @@ def batch_iter(data, batch_size, num_epochs):
     
 
 if __name__ == '__main__':
-#    authorStats(g)
+    g = glob(os.path.join(TALK_FILES_EXTRACTED_DIR,'*.json')) # list of talk pages
+    authorStats(g)
     from spacy.en import English
     tokenize = English(tagger=None,parser=None,entity=None)
     author_sizes = (10,25,50,100)
