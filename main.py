@@ -16,13 +16,13 @@ from pdb import set_trace
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding")
-tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes")
-tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size")
+tf.flags.DEFINE_string("filter_sizes", "1,2,3,4,5", "Comma-separated filter sizes")
+tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 128, "Batch Size")
+tf.flags.DEFINE_integer("batch_size", 64, "Batch Size")
 tf.flags.DEFINE_integer("num_epochs", 40, "Number of training epochs")
 tf.flags.DEFINE_integer("evaluate_every",20 , "Evaluate model on dev set after this many steps")
 tf.flags.DEFINE_integer("checkpoint_every", 40, "Save model after this many steps")
@@ -30,6 +30,7 @@ tf.flags.DEFINE_integer("checkpoint_every", 40, "Save model after this many step
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
+tf.flags.DEFINE_boolean("dev_parameter_search", False, "Run experiment only on dev set")
 tf.flags.DEFINE_string("checkpoint_dir","", "Checkpoint to resume")
 
 FLAGS = tf.flags.FLAGS
@@ -170,8 +171,11 @@ with tf.Graph().as_default():
                 writer.add_summary(summaries, step)
 
         # Generate batches
-        batches = corpus_utils.batch_iter(
-            zip(x_train, y_train), FLAGS.batch_size, FLAGS.num_epochs)
+        if FLAGS.dev_parameter_search:
+            x_y = zip(x_dev, y_dev)
+        else:
+            x_y = zip(x_train, y_train)
+        batches = corpus_utils.batch_iter(x_y, FLAGS.batch_size, FLAGS.num_epochs)
         # Training loop. For each batch...
         for batch in batches:
             x_batch, y_batch = zip(*batch)
@@ -179,7 +183,11 @@ with tf.Graph().as_default():
             current_step = tf.train.global_step(sess, global_step)
             if current_step % FLAGS.evaluate_every == 0:
                 print("\nEvaluation:")
-                eval_step(x_dev, y_dev, writer=dev_summary_writer)
+                if FLAGS.dev_parameter_search:
+                    eval_step(x_dev[:200], y_dev[:200], writer=dev_summary_writer)
+                else:
+                    eval_step(x_dev, y_dev, writer=dev_summary_writer)
+
                 print("")
             if current_step % FLAGS.checkpoint_every == 0:
                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
