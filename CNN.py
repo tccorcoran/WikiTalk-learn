@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 import numpy as np
-
+from pdb import set_trace
 
 class TextCNN(object):
     """
@@ -35,16 +35,19 @@ class TextCNN(object):
             with tf.name_scope("conv-maxpool-%s" % filter_size):
                 # Convolution Layer
                 filter_shape = [filter_size, embedding_size, 1, num_filters]
-                W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
-                b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b")
+                W1 = tf.Variable(tf.truncated_normal([filter_size, embedding_size, 1, num_filters], stddev=0.1), name="W1")
+                b1 = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b1")
+                
+                W2 = tf.Variable(tf.truncated_normal([filter_size, embedding_size, 1, 2*num_filters], stddev=0.1), name="W1")
+                b2 = tf.Variable(tf.constant(0.1, shape=[2*num_filters]), name="b2")
                 conv = tf.nn.conv2d(
                     self.embedded_chars_expanded,
-                    W,
+                    W1,
                     strides=[1, 1, 1, 1],
                     padding="VALID",
                     name="conv")
                 # Apply nonlinearity
-                h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+                h = tf.nn.relu(tf.nn.bias_add(conv, b1), name="relu")
                 # Maxpooling over the outputs
                 pooled = tf.nn.max_pool(
                     h,
@@ -52,12 +55,27 @@ class TextCNN(object):
                     strides=[1, 1, 1, 1],
                     padding='VALID',
                     name="pool")
+                conv = conv = tf.nn.conv2d(
+                    self.embedded_chars_expanded,
+                    W2,
+                    strides=[1, 1, 1, 1],
+                    padding="VALID",
+                    name="conv")
+                h = tf.nn.relu(tf.nn.bias_add(conv, b2), name="relu")
+                
+                pooled = tf.nn.max_pool(
+                    h,
+                    ksize=[1, sequence_length - filter_size + 1, 1, 1],
+                    strides=[1, 1, 1, 1],
+                    padding='VALID',
+                    name="pool")
+
                 pooled_outputs.append(pooled)
 
         # Combine all the pooled features
         num_filters_total = num_filters * len(filter_sizes)
         self.h_pool = tf.concat(3, pooled_outputs)
-        self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
+        self.h_pool_flat = tf.reshape(self.h_pool, [-1, 2*num_filters_total])
 
         # Add dropout
         with tf.name_scope("dropout"):
@@ -65,7 +83,7 @@ class TextCNN(object):
 
         # Final (unnormalized) logits and predictions
         with tf.name_scope("model"):
-            W = tf.Variable(tf.truncated_normal([num_filters_total, num_classes], stddev=0.1), name="W")
+            W = tf.Variable(tf.truncated_normal([2*num_filters_total, num_classes], stddev=0.1), name="W")
             b = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
             l2_loss += tf.nn.l2_loss(W)
             l2_loss += tf.nn.l2_loss(b)

@@ -17,7 +17,7 @@ from pdb import set_trace
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding")
 tf.flags.DEFINE_string("filter_sizes", "1,2,3,4,5", "Comma-separated filter sizes")
-tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size")
+tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 
@@ -184,9 +184,9 @@ with tf.Graph().as_default():
             if current_step % FLAGS.evaluate_every == 0:
                 print("\nEvaluation:")
                 if FLAGS.dev_parameter_search:
-                    eval_step(x_dev[:200], y_dev[:200], writer=dev_summary_writer)
+                    eval_step(x_dev[:300], y_dev[:300], writer=dev_summary_writer)
                 else:
-                    eval_step(x_dev, y_dev, writer=dev_summary_writer)
+                    eval_step(x_dev[:300], y_dev[:300], writer=dev_summary_writer)
 
                 print("")
             if current_step % FLAGS.checkpoint_every == 0:
