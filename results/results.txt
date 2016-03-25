@@ -1,0 +1,71 @@
+Parameters:
+ALLOW_SOFT_PLACEMENT=True
+BATCH_SIZE=128
+CHECKPOINT_DIR=runs/1458753917/checkpoints/
+CHECKPOINT_EVERY=40
+DEV_PARAMETER_SEARCH=False
+DROPOUT_KEEP_PROB=0.5
+EMBEDDING_DIM=128
+EVALUATE_EVERY=20
+FILTER_SIZES=3,4,5
+L2_REG_LAMBDA=0.0
+LOG_DEVICE_PLACEMENT=False
+NUM_EPOCHS=40
+NUM_FILTERS=64
+TEST=True
+
+Loading data...
+Vocabulary Size: 58236
+Train/Dev/Test split: 14949/1868/1870
+F1 score:  0.917052234609
+Accuracy:  0.917647058824
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+Parameters:
+ALLOW_SOFT_PLACEMENT=True
+BATCH_SIZE=128
+CHECKPOINT_DIR=runs/1458712872/checkpoints/
+CHECKPOINT_EVERY=40
+DEV_PARAMETER_SEARCH=False
+DROPOUT_KEEP_PROB=0.5
+EMBEDDING_DIM=128
+EVALUATE_EVERY=20
+FILTER_SIZES=1,2,3,4
+L2_REG_LAMBDA=0.0
+LOG_DEVICE_PLACEMENT=False
+NUM_EPOCHS=40
+NUM_FILTERS=64
+TEST=True
+
+Loading data...
+Vocabulary Size: 58236
+Train/Dev/Test split: 14949/1868/1870
+F1 score:  0.924115852178
+Accuracy:  0.924598930481
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(2 conv layers)
+Parameters:
+ALLOW_SOFT_PLACEMENT=True
+BATCH_SIZE=128
+CHECKPOINT_DIR=runs/1458787865/checkpoints/
+CHECKPOINT_EVERY=40
+DEV_PARAMETER_SEARCH=False
+DROPOUT_KEEP_PROB=0.5
+EMBEDDING_DIM=128
+EVALUATE_EVERY=20
+FILTER_SIZES=1,2,3,4
+L2_REG_LAMBDA=0.0
+LOG_DEVICE_PLACEMENT=False
+NUM_EPOCHS=40
+NUM_FILTERS=64
+TEST=True
+
+Loading data...
+Vocabulary Size: 58236
+Train/Dev/Test split: 14949/1868/1870
+F1 score:  0.942147608122
+Accuracy:  0.942245989305
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

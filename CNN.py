@@ -36,7 +36,7 @@ class TextCNN(object):
                 W1 = tf.Variable(tf.truncated_normal([filter_size, embedding_size, 1, num_filters], stddev=0.1), name="W1")
                 b1 = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b1")
                 
-                W2 = tf.Variable(tf.truncated_normal([filter_size, embedding_size, 1, 2*num_filters], stddev=0.1), name="W1")
+                W2 = tf.Variable(tf.truncated_normal([1, 1, num_filters, 2*num_filters], stddev=0.1), name="W2")
                 b2 = tf.Variable(tf.constant(0.1, shape=[2*num_filters]), name="b2")
                 
                 # 1st Convolution Layer
@@ -49,6 +49,7 @@ class TextCNN(object):
                 # Apply nonlinearity
                 h = tf.nn.relu(tf.nn.bias_add(conv, b1), name="relu")
                 # Maxpooling over the outputs
+                
                 pooled = tf.nn.max_pool(
                     h,
                     ksize=[1, sequence_length - filter_size + 1, 1, 1],
@@ -57,24 +58,17 @@ class TextCNN(object):
                     name="pool")
                 
                 # 2nd Convolution Layer
-                conv = conv = tf.nn.conv2d(
-                    self.embedded_chars_expanded,
-                    W2,
-                    strides=[1, 1, 1, 1],
-                    padding="VALID",
-                    name="conv")
+                #set_trace()
+                conv = tf.nn.conv2d(pooled, W2, strides=[1, 1, 1, 1],padding="VALID", name="conv2")
+                
                 # non-linear activation function
                 h = tf.nn.relu(tf.nn.bias_add(conv, b2), name="relu")
                 # Max pooling
-                pooled = tf.nn.max_pool(
-                    h,
-                    ksize=[1, sequence_length - filter_size + 1, 1, 1],
-                    strides=[1, 1, 1, 1],
-                    padding='VALID',
-                    name="pool")
+                
+                pooled = tf.nn.max_pool(h,ksize=[1, 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool2")
 
                 pooled_outputs.append(pooled)
-
+                
         # Combine all the pooled features
         num_filters_total = num_filters * len(filter_sizes)
         self.h_pool = tf.concat(3, pooled_outputs)

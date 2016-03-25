@@ -15,7 +15,7 @@ from CNN import TextCNN
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding")
-tf.flags.DEFINE_string("filter_sizes", "1,2,3,4,5", "Comma-separated filter sizes")
+tf.flags.DEFINE_string("filter_sizes", "1,2,3,4", "Comma-separated filter sizes")
 tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
@@ -31,7 +31,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 tf.flags.DEFINE_boolean("dev_parameter_search", False, "Run experiment only on dev set")
 tf.flags.DEFINE_string("checkpoint_dir","", "Checkpoint to resume")
-tf.flags.DEFINE_boolean("test", True, "Allow device soft device placement")
+tf.flags.DEFINE_boolean("test", False, "Allow device soft device placement")
 
 FLAGS = tf.flags.FLAGS
 FLAGS.batch_size
