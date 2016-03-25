@@ -6,7 +6,9 @@ import tensorflow as tf
 import os
 import time
 import datetime
+
 from sklearn import metrics
+
 import corpus_utils
 from CNN import TextCNN
 

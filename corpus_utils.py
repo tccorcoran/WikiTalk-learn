@@ -5,16 +5,15 @@ All code (c) Thomas Corcoran unless otherwise noted
 """
 from __future__ import unicode_literals
 from multiprocessing import Manager, Pool
-from pdb import set_trace
 from glob import glob
 from collections import Counter
-from sklearn.feature_extraction.text import CountVectorizer
-import numpy as np
 import codecs
 import os
 import json
 
 import regex as re
+from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
 
 ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
 # list of json files to work with

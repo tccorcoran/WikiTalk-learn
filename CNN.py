@@ -2,8 +2,7 @@
 # found here: github.com/dennybritz/cnn-text-classification-tf
 
 import tensorflow as tf
-import numpy as np
-from pdb import set_trace
+
 
 class TextCNN(object):
     """
