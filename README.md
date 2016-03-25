@@ -1,6 +1,5 @@
 # WikiTalk-learn
-Utilities to create a corpus from the Wikipedia talk pages, and run some interesting machine learning / NLP tasks on the corpus.
-
+Utilities to create a corpus from the Wikipedia talk pages, and run some interesting machine learning / NLP tasks on the corpus. The only ML experiment here now is an author classifier--the classifier can be trained to determine the author of talk page posts with 94% accuracy. The classifier uses 2 layer convolutional neural net build in TensorFlow.
 Dependencies
 ------------
 * Python 2.7.x
@@ -19,3 +18,6 @@ Procedure
 * run `python munge.py` to generate json files with some metadata generated from some heuristics (reply structure, author, post topic)
 * run `python corpus_utils.py` to generate vectorized corpus files
 * run `python main.py` to start the tensorflow learning experiment
+
+
+**Note:** This repo contains all the corpus files needed to train the learner on a corpus of 10 authors. The only command needed to run the learning experiments is `./main.py`. The parameters can be changed with the appropriate flags. See `./main.py --help' for help on the available flags. 
