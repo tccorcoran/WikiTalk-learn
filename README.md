@@ -5,8 +5,10 @@ Dependencies
 * Python 2.7.x
 * sklearn==0.17
 * tensorflow==0.7.0
+
 The following are needed for the generation of corpus files. They are not necessary if you plan to use the corpus file included in this repo.
 However you must comment out their import statements in `corpus_utils.py` if you do not install them.
+
 * beautifulsoup4==4.4.1
 * regex==2016.3.2
 * spacy==0.100.5
