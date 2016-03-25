@@ -1,6 +1,6 @@
 #! /usr/bin/env python
-# This code is modified from the original found here: github.com/dennybritz/cnn-text-classification-tf
-
+# This code is modified from the original by Denny Britz
+# found here: github.com/dennybritz/cnn-text-classification-tf
 
 import tensorflow as tf
 import os

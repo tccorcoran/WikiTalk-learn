@@ -1,6 +1,8 @@
 """
 Extract and convert raw xml files generate by extratFromWikiDump into
-json files with some metadata (reply structure, author, post topic)
+json files with some metadata (
+
+All code (c) Thomas Corcoran unless otherwise noted
 """
 import regex as re
 import os
