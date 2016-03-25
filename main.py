@@ -10,7 +10,6 @@ from sklearn import metrics
 import corpus_utils
 from CNN import TextCNN
 
-from pdb import set_trace
 # Parameters
 # ==================================================
 
@@ -32,14 +31,17 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 tf.flags.DEFINE_boolean("dev_parameter_search", False, "Run experiment only on dev set")
 tf.flags.DEFINE_string("checkpoint_dir","", "Checkpoint to resume")
+tf.flags.DEFINE_boolean("test", True, "Allow device soft device placement")
 
 FLAGS = tf.flags.FLAGS
 FLAGS.batch_size
 
-
 # Output directory for models and summaries
 timestamp = str(int(time.time()))
-out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
+if FLAGS.checkpoint_dir:
+    out_dir = os.path.split(FLAGS.checkpoint_dir)
+else:
+    out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
 # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
 checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
 checkpoint_prefix = os.path.join(checkpoint_dir, "model")
@@ -127,16 +129,13 @@ with tf.Graph().as_default():
         test_summary_dir = os.path.join(out_dir, "summaries", "test")
         test_summary_writer = tf.train.SummaryWriter(test_summary_dir, sess.graph_def)
 
-
+        # restore from checkpoint?
         saver = tf.train.Saver(tf.all_variables())
         ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
-            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-            pred = sess.run(cnn.predicions, {cnn.input_x: x_test[:500],cnn.dropout_keep_prob: 1.0}) 
-            metrics.f1_score(corpus_utils.unOneHot(y_test[:500]),pred)
-        # Initialize all variables
         else:
+            # Otherwise initialize all variables
             sess.run(tf.initialize_all_variables())
 
         def train_step(x_batch, y_batch):
@@ -175,22 +174,28 @@ with tf.Graph().as_default():
             x_y = zip(x_dev, y_dev)
         else:
             x_y = zip(x_train, y_train)
-        batches = corpus_utils.batch_iter(x_y, FLAGS.batch_size, FLAGS.num_epochs)
-        # Training loop. For each batch...
-        for batch in batches:
-            x_batch, y_batch = zip(*batch)
-            train_step(x_batch, y_batch)
-            current_step = tf.train.global_step(sess, global_step)
-            if current_step % FLAGS.evaluate_every == 0:
-                print("\nEvaluation:")
-                if FLAGS.dev_parameter_search:
-                    eval_step(x_dev[:300], y_dev[:300], writer=dev_summary_writer)
-                else:
-                    eval_step(x_dev[:300], y_dev[:300], writer=dev_summary_writer)
-
-                print("")
-            if current_step % FLAGS.checkpoint_every == 0:
-                path = saver.save(sess, checkpoint_prefix, global_step=current_step)
-                print("Saved model checkpoint to {}\n".format(path))
-        # Test model once
-        eval_step(x_test, y_test, writer=test_summary_writer)
+        
+        if not FLAGS.test:
+            batches = corpus_utils.batch_iter(x_y, FLAGS.batch_size, FLAGS.num_epochs)
+            # Training loop. For each batch...
+            for batch in batches:
+                x_batch, y_batch = zip(*batch)
+                train_step(x_batch, y_batch)
+                current_step = tf.train.global_step(sess, global_step)
+                if current_step % FLAGS.evaluate_every == 0:
+                    print("\nEvaluation:")
+                    if FLAGS.dev_parameter_search:
+                        eval_step(x_dev[:300], y_dev[:300], writer=dev_summary_writer)
+                    else:
+                        eval_step(x_dev, y_dev, writer=dev_summary_writer)
+                    print("")
+                if current_step % FLAGS.checkpoint_every == 0:
+                    path = saver.save(sess, checkpoint_prefix, global_step=current_step)
+                    print("Saved model checkpoint to {}\n".format(path))
+            # Test model once
+        else:
+            pred = sess.run(cnn.predicions, {cnn.input_x: x_test,cnn.dropout_keep_prob: 1.0}) 
+            f1 = metrics.f1_score(corpus_utils.unOneHot(y_test),pred)
+            acc = metrics.accuracy_score(corpus_utils.unOneHot(y_test),pred)
+            print "F1 score: ", f1
+            print "Accuracy: ", acc
