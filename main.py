@@ -39,7 +39,7 @@ FLAGS.batch_size
 # Output directory for models and summaries
 timestamp = str(int(time.time()))
 if FLAGS.checkpoint_dir:
-    out_dir = os.path.split(FLAGS.checkpoint_dir)
+    out_dir = os.path.split(FLAGS.checkpoint_dir)[0]
 else:
     out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
 # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
@@ -194,8 +194,8 @@ with tf.Graph().as_default():
                     print("Saved model checkpoint to {}\n".format(path))
             # Test model once
         else:
-            pred = sess.run(cnn.predicions, {cnn.input_x: x_test,cnn.dropout_keep_prob: 1.0}) 
-            f1 = metrics.f1_score(corpus_utils.unOneHot(y_test),pred)
+            pred = sess.run(cnn.predictions, {cnn.input_x: x_test,cnn.dropout_keep_prob: 1.0}) 
+            f1 = metrics.f1_score(corpus_utils.unOneHot(y_test),pred,average='weighted')
             acc = metrics.accuracy_score(corpus_utils.unOneHot(y_test),pred)
             print "F1 score: ", f1
             print "Accuracy: ", acc

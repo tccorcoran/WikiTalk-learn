@@ -349,7 +349,7 @@ def unOneHot(y):
     """
     ret = []
     for vec in y:
-        ret.append(list(vec.index(1)))
+        ret.append(list(vec).index(1))
     return ret
 
 def loadDataSparse(n_authors,return_onehot=True):
