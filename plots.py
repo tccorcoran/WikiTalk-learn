@@ -56,5 +56,17 @@ def show_confusion_matrix():
     plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
     
     plt.show()
+    
+def authorship2():
+    with open('data/authors.json') as fi:
+        authors = json.load(fi)
+    y = [ a[1]for a in authors[:10000]]
+    x = range(len(authors[:10000]))
+    plt.barh(x, y, alpha=0.5)
+    plt.ylabel('Number of Characters')
+    plt.xlabel('Author')
+    plt.title('Author Frequency')
+    plt.show()
+    
 show_confusion_matrix()
     
