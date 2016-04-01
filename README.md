@@ -22,7 +22,7 @@ Procedure
 The parameters can be changed with the appropriate flags. See `./main.py --help' for help on the available flags. 
 
 * To generate the corpus yourself you need a copy of a Wikipedia metadata database dump, [enwiki-20160204-pages-meta-current.xml.bz2](https://dumps.wikimedia.org/enwiki/20160204/). Download this to the `data/` dir and extract the bzip2 xml file.
-* run `python extratFromWikiDump.py` to generate a dir of extracted talk xml files (very large > 1 million files)
+* run `python extractFromWikiDump.py` to generate a dir of extracted talk xml files (very large > 1 million files)
 * run `python munge.py` to generate json files with some metadata generated from some heuristics (reply structure, author, post topic)
 * run `python corpus_utils.py` to generate vectorized corpus files
 * run `python main.py` to start the tensorflow learning experiment
