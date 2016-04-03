@@ -7,7 +7,7 @@ import sys
 import os
 
 ROOT_DIR = os.path.split(os.path.realpath(__file__))[0]
-TALK_FILES_DIR = os.path.join(ROOT_DIR,'data/talk_pages')
+TALK_FILES_DIR = os.path.join(ROOT_DIR,'data/talk_pages_raw_xml')
 
 def processBuffer(buf):
     """
