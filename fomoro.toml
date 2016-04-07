@@ -1,0 +1,4 @@
+name = "wikilearn"
+repo = "https://github.com/tccorcoran/WikiTalk-learn"
+description = "Utilities to create a corpus from the Wikipedia talk pages, and run some interesting machine learning / NLP tasks on the corpus."
+environment = "tensorflow"
